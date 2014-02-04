@@ -16,6 +16,7 @@ int LJY = 5; //Left Joystick Y
 
 float RJXVal;
 float LJYVal;
+float oldLJYVal = 0;
 
 float RMult; // Right wheels multiplyer
 float LMult; // Left wheels multipler
@@ -41,7 +42,7 @@ void loop(){
   RJXVal= pulseIn(RJX, HIGH, 25000); // Read the pulse width of right joystick X
   LJYVal = pulseIn(LJY, HIGH, 25000); // Read the pulse width of left joystick Y
   
-  RJXVal = RJXVal - 1300; // Centers RSXVal
+  RJXVal = RJXVal - 1303; // Centers RSXVal
   LJYVal = LJYVal - 1523; // Centers LSYVal
   
   if(abs(RJXVal) < 12){
@@ -50,11 +51,6 @@ void loop(){
   if(abs(LJYVal) < 12){ //Checks if 
     LJYVal = 0; // Set LJYVal to 0
   }
-  
-  Serial.print("RJXVal (Before): ");  
-  Serial.println(RJXVal);  
-  Serial.print("LJYVal (Before): ");
-  Serial.println(LJYVal);
   
   if (RJXVal > 0) {
     RJXVal =  RJXVal / 504;
@@ -68,11 +64,11 @@ void loop(){
   if(LJYVal < 0){
     LJYVal = LJYVal / 5.50;
   }
-  
-  Serial.print("RJXVal (After): ");  
-  Serial.println(RJXVal);  
-  Serial.print("LJYVal (After): ");
-  Serial.println(LJYVal);
+   
+  Serial.print(RJXVal);  
+  Serial.print(", ");
+  Serial.print(LJYVal);
+  Serial.print(", ");
   
   if(abs(LJYVal) < 5){
     if(abs(RJXVal) > .5){
@@ -103,62 +99,81 @@ void loop(){
       }  
     }
   }
+  
+  
+  
   if(!fullTurn){ 
-    if(RJXVal == 0) {
-      RMult = 1;
-      LMult = 1;
-    }
-    if(RJXVal > 0){
-     LMult = 1;
-     RMult = (RJXVal * - 2) + 1; 
-    }
-    if(RJXVal < 0){
-     LMult = (RJXVal * 2) + 1;
-     RMult = 1; 
-    }
+    if(LJYVal > -105 && LJYVal < 105 ){
+     if(LJYVal < oldLJYVal + 20 && LJYVal > oldLJYVal - 20){
+        if(RJXVal == 0) {
+          RMult = 1;
+          LMult = 1;
+        }
+        if(RJXVal > 0){
+         RMult = 1;
+         LMult = (RJXVal * - 2) + 1; 
+        }
+         if(RJXVal < 0){
+         RMult = (RJXVal * 2) + 1;
+         LMult = 1; 
+        }
+      
+        totalSpeedLeft = LMult * LJYVal;
+        totalSpeedRight = RMult * LJYVal;
   
-    totalSpeedLeft = LMult * LJYVal;
-    totalSpeedRight = RMult * LJYVal;
   
-  
-    if(totalSpeedLeft > 0 ){
-      motor1->run(FORWARD);
-      motor2->run(FORWARD);
+        if(totalSpeedLeft > 0 ){
+          motor1->run(FORWARD);
+          motor2->run(FORWARD);
+        
+          motor1->setSpeed(totalSpeedLeft); 
+          motor2->setSpeed(totalSpeedLeft);
+        
+          Serial.print("Foward, ");
+          Serial.print(totalSpeedLeft);
+          Serial.print(" ");
+        }
+        if(totalSpeedLeft < 0){    
+          motor1->run(BACKWARD);
+          motor2->run(BACKWARD);
+      
+          motor1->setSpeed(-totalSpeedLeft);
+          motor2->setSpeed(-totalSpeedLeft); 
+          
+          Serial.print("Backward, ");
+          Serial.print(totalSpeedLeft);
+          Serial.print(" ");
+        }
     
-      motor1->setSpeed(totalSpeedLeft); 
-      motor2->setSpeed(totalSpeedLeft);
-    }
-    if(totalSpeedLeft < 0){    
-      motor1->run(BACKWARD);
-      motor2->run(BACKWARD);
-    
-      motor1->setSpeed(-totalSpeedLeft);
-      motor2->setSpeed(-totalSpeedLeft); 
-    }
+        if(totalSpeedRight > 0 ){    
+          motor3->run(FORWARD);
+          motor4->run(FORWARD);
+         
+          motor3->setSpeed(totalSpeedRight); 
+          motor4->setSpeed(totalSpeedRight);
+          
+          Serial.print("Forward, ");
+          Serial.print(totalSpeedRight);
+        }
+        if(totalSpeedRight < 0){   
+          motor3->run(BACKWARD);
+          motor4->run(BACKWARD);
   
-    if(totalSpeedRight > 0 ){    
-      motor3->run(FORWARD);
-      motor4->run(FORWARD);
-       
-      motor3->setSpeed(totalSpeedRight); 
-      motor4->setSpeed(totalSpeedRight);
+          motor3->setSpeed(-totalSpeedRight); 
+          motor4->setSpeed(-totalSpeedRight);
+          Serial.print("Backward, ");
+          Serial.print(-totalSpeedRight);
+        }
+      }
+      oldLJYVal = LJYVal;
     }
-    if(totalSpeedRight < 0){   
-      motor3->run(BACKWARD);
-      motor4->run(BACKWARD);
-
-      motor3->setSpeed(-totalSpeedRight); 
-      motor4->setSpeed(-totalSpeedRight);
-    }
-    
-
     //Serial.println(map(RJXVal, 1000,2000,-500,500)); // center at 0
     //Serial.println(map(LSYVal, 1000,2000,-500,500)); // center at 0
   }
 
     Serial.println(); //Prints a line into the serial monitor.
     
-    delay(10);
+    delay(1);
     fullTurn = false;
   
 }
